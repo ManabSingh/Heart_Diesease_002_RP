@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cross-Domain AI Heart Disease Prediction Model — Stacking Ensemble with SHAP Explainability and Feature Shift Analysis">
+    <title>AI Cardiology Assistant — Heart Risk Predictor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫀</text></svg>">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+    <a class="nav-brand" href="#">
+        <span class="nav-brand-icon">🫀</span>
+        <span class="nav-brand-text">AI Cardiology Assistant</span>
+    </a>
+    <ul class="nav-links">
+        <li><button class="nav-link active" data-section="predictor" id="nav-predictor">🩺 Heart Risk Predictor</button></li>
+        <li><button class="nav-link" data-section="dashboard" id="nav-dashboard">📊 Research Dashboard</button></li>
+    </ul>
+</nav>
+
+<main class="main-container">
+
+<section class="section active" id="predictor">
+    <div class="hero-section">
+        <h1 class="hero-title">Heart Disease Risk Predictor</h1>
+        <p class="hero-subtitle">Enter a patient's clinical profile below. The AI ensemble — XGBoost, LightGBM, and Random Forest — will evaluate cardiovascular risk in real time.</p>
+    </div>
+
+    <div class="prediction-layout">
+        <div class="glass-card">
+            <div class="card-header">
+                <div class="card-header-icon">📋</div>
+                <div>
+                    <h2>Patient Clinical Profile</h2>
+                    <p>Enter the 13 diagnostic attributes</p>
+                </div>
+            </div>
+
+            <form id="prediction-form" class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="age">Age <span class="unit">(years)</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" class="form-range" id="age" min="20" max="100" value="50">
+                        <span class="range-value" id="age-val">50</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="sex">Sex</label>
+                    <select class="form-select" id="sex">
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="cp">Chest Pain Type</label>
+                    <select class="form-select" id="cp">
+                        <option value="0">Asymptomatic</option>
+                        <option value="1">Atypical Angina</option>
+                        <option value="2">Non-Anginal Pain</option>
+                        <option value="3">Typical Angina</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="trestbps">Resting BP <span class="unit">(mmHg)</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" class="form-range" id="trestbps" min="80" max="200" value="120">
+                        <span class="range-value" id="trestbps-val">120</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="chol">Cholesterol <span class="unit">(mg/dL)</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" class="form-range" id="chol" min="100" max="400" value="200">
+                        <span class="range-value" id="chol-val">200</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fbs">Fasting Blood Sugar &gt; 120</label>
+                    <select class="form-select" id="fbs">
+                        <option value="0">False</option>
+                        <option value="1">True</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="restecg">Resting ECG Result</label>
+                    <select class="form-select" id="restecg">
+                        <option value="0">Normal</option>
+                        <option value="1">ST-T Abnormality</option>
+                        <option value="2">LV Hypertrophy</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="thalach">Max Heart Rate <span class="unit">(bpm)</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" class="form-range" id="thalach" min="60" max="220" value="150">
+                        <span class="range-value" id="thalach-val">150</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="exang">Exercise Induced Angina</label>
+                    <select class="form-select" id="exang">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="oldpeak">ST Depression <span class="unit">(oldpeak)</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" class="form-range" id="oldpeak" min="0" max="6.2" step="0.1" value="1.0">
+                        <span class="range-value" id="oldpeak-val">1.0</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="slope">ST Segment Slope</label>
+                    <select class="form-select" id="slope">
+                        <option value="0">Downsloping</option>
+                        <option value="1">Flat</option>
+                        <option value="2">Upsloping</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ca">Major Vessels Colored <span class="unit">(ca)</span></label>
+                    <div class="range-wrapper">
+                        <input type="range" class="form-range" id="ca" min="0" max="4" value="0">
+                        <span class="range-value" id="ca-val">0</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="thal">Thalassemia</label>
+                    <select class="form-select" id="thal">
+                        <option value="1">Normal</option>
+                        <option value="2">Fixed Defect</option>
+                        <option value="3">Reversible Defect</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-predict" id="btn-predict">
+                        🔬 Run Diagnostic Analysis
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="results-panel">
+            <div class="glass-card">
+                <div class="card-header">
+                    <div class="card-header-icon">📈</div>
+                    <div>
+                        <h2>Diagnostic Verdict</h2>
+                        <p>Meta-Classifier Ensemble Prediction</p>
+                    </div>
+                </div>
+                <div class="gauge-container" id="gauge-container">
+                    <svg class="gauge-svg" viewBox="0 0 220 130">
+                        <path class="gauge-bg" d="M 20 110 A 90 90 0 0 1 200 110" />
+                        <path class="gauge-fill" id="gauge-fill" d="M 20 110 A 90 90 0 0 1 200 110"
+                              stroke="var(--accent-blue)"
+                              stroke-dasharray="283"
+                              stroke-dashoffset="283" />
+                    </svg>
+                    <div class="gauge-percentage" id="gauge-percent">—%</div>
+                    <div class="gauge-label">Risk Probability</div>
+                    <div class="verdict-badge low-risk" id="verdict-badge">
+                        <span>⏳</span> <span id="verdict-text">Awaiting Input</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header">
+                    <div class="card-header-icon">🏥</div>
+                    <div>
+                        <h2>The "Board of Doctors"</h2>
+                        <p>Individual base model opinions</p>
+                    </div>
+                </div>
+                <div class="doctors-grid" id="doctors-grid">
+                    <div class="doctor-card">
+                        <div class="doctor-avatar">🧬</div>
+                        <div class="doctor-name">Dr. XGBoost</div>
+                        <div class="doctor-vote" id="vote-xgb" style="color: var(--text-muted);">—%</div>
+                        <div class="doctor-label">Risk Score</div>
+                    </div>
+                    <div class="doctor-card">
+                        <div class="doctor-avatar">⚡</div>
+                        <div class="doctor-name">Dr. LightGBM</div>
+                        <div class="doctor-vote" id="vote-lgbm" style="color: var(--text-muted);">—%</div>
+                        <div class="doctor-label">Risk Score</div>
+                    </div>
+                    <div class="doctor-card">
+                        <div class="doctor-avatar">🌲</div>
+                        <div class="doctor-name">Dr. Random Forest</div>
+                        <div class="doctor-vote" id="vote-rf" style="color: var(--text-muted);">—%</div>
+                        <div class="doctor-label">Risk Score</div>
+                    </div>
+                </div>
+                <p style="text-align:center; font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
+                    The Stacking Meta-Classifier weighs these individual predictions to produce the final verdict.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="section" id="dashboard">
+    <div class="dashboard-hero">
+        <h1>Research Dashboard</h1>
+        <p>Explore the model's architecture, performance metrics, explainability analysis, and cross-domain generalizability findings.</p>
+    </div>
+
+    <div class="dashboard-container">
+
+        <div class="capabilities-grid stagger-children animate-on-scroll">
+            <div class="capability-card">
+                <span class="capability-icon">🎯</span>
+                <div class="capability-title">Binary Classification</div>
+                <div class="capability-desc">Predicts the presence (1) or absence (0) of heart disease from 13 clinical features.</div>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">🌍</span>
+                <div class="capability-title">Cross-Domain Testing</div>
+                <div class="capability-desc">Trained on Cleveland, tested on Statlog — proving accuracy degrades on unseen populations.</div>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">🔄</span>
+                <div class="capability-title">Feature Shift Detection</div>
+                <div class="capability-desc">Reveals how the model's diagnostic reasoning changes when applied to different datasets.</div>
+            </div>
+            <div class="capability-card">
+                <span class="capability-icon">🧠</span>
+                <div class="capability-title">SHAP Explainability</div>
+                <div class="capability-desc">Uses Explainable AI to rank which clinical features drive each individual prediction.</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <div class="icon">📐</div>
+            <h2>Modules Implemented Details</h2>
+        </div>
+        <div class="methodology-grid stagger-children animate-on-scroll" style="margin-bottom: 3rem;">
+            <div class="method-card">
+                <div class="method-step">1</div>
+                <h3>Data Acquisition & Harmonization</h3>
+                <p>Retrieved clinical datasets from Cleveland (303 instances) and Statlog (270 instances). Applied feature harmonization to ensure matching cross-domain attributes and schema consistency.</p>
+            </div>
+            <div class="method-card">
+                <div class="method-step">2</div>
+                <h3>Data Preprocessing</h3>
+                <p>Performed rigorous missing value imputation, robust outlier removal (IQR methodology), one-hot encoding for categorical variables, standard scaling, and SMOTE-ENN class balancing.</p>
+            </div>
+            <div class="method-card">
+                <div class="method-step">3</div>
+                <h3>Model Training & Tuning</h3>
+                <p>Trained XGBoost, LightGBM, and Random Forest base learners utilizing Optuna for Bayesian hyperparameter optimization. Evaluated using 5-fold cross-validation on the source domain.</p>
+            </div>
+            <div class="method-card">
+                <div class="method-step">4</div>
+                <h3>Stacking Ensemble Creation</h3>
+                <p>Integrated base learners into a meta-classifier architecture using a Logistic Regression meta-learner (C=0.1) to intelligently weigh and combine base predictions for superior accuracy.</p>
+            </div>
+            <div class="method-card">
+                <div class="method-step">5</div>
+                <h3>Cross-Domain Evaluation</h3>
+                <p>Deployed the source-trained (Cleveland) ensemble directly onto the unseen target domain (Statlog) to record the model's accuracy degradation and real-world generalizability.</p>
+            </div>
+            <div class="method-card">
+                <div class="method-step">6</div>
+                <h3>SHAP Explainability & Feature Shift</h3>
+                <p>Extracted model feature importance via SHAP values for both domains. Computed attribution shifts to understand how diagnostic reasoning changes across varying patient populations.</p>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <div class="icon">💻</div>
+            <h2>Implementation Screens</h2>
+        </div>
+        <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.95rem;">
+            The application provides an intuitive graphical interface separated into two main modules. 
+            The <strong>Heart Risk Predictor</strong> enables physicians to input real-time patient attributes (Age, Chol, Resting BP, etc.) to query the underlying Stacking Meta-Classifier. 
+            The <strong>Research Dashboard</strong> exposes the internal scientific findings, comparing source and target domains through dynamic visualizations.
+        </p>
+        <div class="image-gallery animate-on-scroll" style="margin-bottom: 3rem;">
+            <div class="gallery-item wide" data-img="/figures/architecture.png">
+                <img src="/figures/Architecture Diagram/architecture.png" alt="Implementation App Interface" class="gallery-img" loading="lazy">
+                <div class="gallery-caption"><strong>System Overview</strong> — Flow of Data from the Application Interface through the Machine Learning Backend</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <div class="icon">📊</div>
+            <h2>Experimental Results</h2>
+        </div>
+        
+        <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.95rem;">
+            The experiments evaluate how well the AI generalizes to unseen hospital data. The tables and graphs below summarize the performance gap when transferring the model trained entirely on the Cleveland dataset over to the Statlog dataset. 
+        </p>
+
+        <div class="glass-card animate-on-scroll" style="margin-bottom: 2rem; overflow-x: auto;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">Cross-Domain Performance Table</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Source: Cleveland</th>
+                        <th>Target: Statlog</th>
+                        <th>Shift (Difference)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Accuracy</strong></td>
+                        <td style="color: var(--accent-green);">0.9247</td>
+                        <td style="color: var(--accent-amber);">0.8148</td>
+                        <td style="color: var(--accent-red);">-10.99%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Precision</strong></td>
+                        <td style="color: var(--accent-green);">0.9167</td>
+                        <td style="color: var(--accent-amber);">0.8241</td>
+                        <td style="color: var(--accent-red);">-9.26%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sensitivity (Recall)</strong></td>
+                        <td style="color: var(--accent-green);">0.9362</td>
+                        <td style="color: var(--accent-amber);">0.7417</td>
+                        <td style="color: var(--accent-red);">-19.45%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Specificity</strong></td>
+                        <td style="color: var(--accent-green);">0.9130</td>
+                        <td style="color: var(--accent-amber);">0.8733</td>
+                        <td style="color: var(--accent-red);">-3.97%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>F1-Score</strong></td>
+                        <td style="color: var(--accent-green);">0.9263</td>
+                        <td style="color: var(--accent-amber);">0.7807</td>
+                        <td style="color: var(--accent-red);">-14.56%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AUC-ROC</strong></td>
+                        <td style="color: var(--accent-green);">0.9801</td>
+                        <td style="color: var(--accent-amber);">0.9055</td>
+                        <td style="color: var(--accent-red);">-7.46%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="image-gallery animate-on-scroll" style="margin-bottom: 3rem;">
+            <div class="gallery-item" data-img="/results/evaluation/comparative_roc_subplots.png">
+                <img src="/results/evaluation/comparative_roc_subplots.png" alt="Comparative ROC Curves" class="gallery-img" loading="lazy">
+                <div class="gallery-caption"><strong>Comparative ROC Subplots</strong><br>Illustrates the trade-off between the true positive rate and false positive rate. Notice the separation of the AUC curves degrading slightly on the right subplot.</div>
+            </div>
+            <div class="gallery-item" data-img="/results/evaluation/comparative_confusion_matrix.png">
+                <img src="/results/evaluation/comparative_confusion_matrix.png" alt="Comparative Confusion Matrix" class="gallery-img" loading="lazy">
+                <div class="gallery-caption"><strong>Comparative Confusion Matrices</strong><br>Details exact classification counts. The target domain matrix reveals a noticeable increase in False Negatives (missed diagnoses).</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <div class="icon">🔬</div>
+            <h2>Result Discussion & Feature Shift</h2>
+        </div>
+        
+        <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.95rem;">
+            Our findings reveal an underlying vulnerability in clinical machine learning: <strong>Attribution Shift</strong>. Even when overall predictive accuracy remains acceptable, the internal logic the model uses changes drastically depending on the population demographics.
+        </p>
+
+        <div class="image-gallery animate-on-scroll" style="margin-bottom: 2rem;">
+            <div class="gallery-item wide" data-img="/results/explainability/comparative_shap_subplots.png">
+                <img src="/results/explainability/comparative_shap_subplots.png" alt="Comparative SHAP Subplots" class="gallery-img" loading="lazy">
+                <div class="gallery-caption"><strong>Comparative SHAP Summary Plots</strong> — SHAP values visually rank the importance of features. Comparing these domains demonstrates that the model relies heavily on 'thalach' and 'age' in the source domain, but the prioritization shifts considerably on the target Statlog population.</div>
+            </div>
+            <div class="gallery-item wide" data-img="/results/feature_distribution_shift.png">
+                <img src="/results/feature_distribution_shift.png" alt="Feature Distribution Shift" class="gallery-img" loading="lazy">
+                <div class="gallery-caption"><strong>Feature Distribution Shift</strong> — Highlights statistical variations in patient data distributions (such as cholesterol ranges or age curves) between datasets, which directly causes the model's accuracy drop.</div>
+            </div>
+        </div>
+
+        <div class="glass-card animate-on-scroll" style="margin-bottom: 3rem; overflow-x: auto;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">Feature Attribution Shift Analysis</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">This table quantifies the absolute shift in how much weight the AI assigns to specific clinical indicators across the two datasets.</p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Clinical Feature</th>
+                        <th>Cleveland SHAP Rank</th>
+                        <th>Statlog SHAP Rank</th>
+                        <th>Shift Delta</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>thalach</strong> (Max Heart Rate)</td>
+                        <td>Rank #1</td>
+                        <td>Rank #1</td>
+                        <td>Minor</td>
+                        <td><span style="color: var(--accent-green);">Stable</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>age</strong></td>
+                        <td>Rank #2</td>
+                        <td>Rank #4</td>
+                        <td>Moderate</td>
+                        <td><span style="color: var(--accent-amber);">Shifted</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>ca</strong> (Major Vessels)</td>
+                        <td>Rank #5</td>
+                        <td>Rank #2</td>
+                        <td>Significant</td>
+                        <td><span style="color: var(--accent-red);">Highly Unstable</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>oldpeak</strong> (ST Depression)</td>
+                        <td>Rank #7</td>
+                        <td>Rank #5</td>
+                        <td>Moderate</td>
+                        <td><span style="color: var(--accent-amber);">Shifted</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Heart Disease Prediction Research Model v1.0 · Built with XGBoost, LightGBM, Random Forest & SHAP<br>
+        Cross-Domain AI Cardiology — Cleveland → Statlog Generalizability Study</p>
+    </footer>
+</section>
+
+</main>
+
+<div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" id="lightbox-close">✕</button>
+    <img class="lightbox-img" id="lightbox-img" src="" alt="Full size view">
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
